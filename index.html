@@ -45,6 +45,10 @@
       margin: 0 auto;
     }
 
+    td[title] {
+      cursor: pointer;
+    }
+
     @media (prefers-color-scheme: dark) {
       * { color-scheme: dark; }
     }
@@ -71,6 +75,9 @@
     </p>
     <p>
       The goal of this was to find a suitable import/export library for things you can store in IndexedDB.
+    </p>
+    <p>
+      (Click on each ✅ ❌ to see more details)
     </p>
   </main>
 
@@ -316,7 +323,8 @@
         const nSuccess = data.results.reduce((acc, r) => acc + r.ok, 0)
         row.cells[i + 1].innerHTML = (data.results.some(r => !r.ok) ? '❌' : '✅') + ` ${nSuccess}/${data.results.length}`
         row.cells[i + 1].onclick = () => showRowDetails(row, data)
-
+        row.cells[i + 1].title = 'Click to show details'
+        console.log(row.cells[i + 1])
         // Update summary in tfoot
         const summary = table.tFoot.rows[0].cells[i + 1]
         const n = parseInt(summary.innerText) || 0
