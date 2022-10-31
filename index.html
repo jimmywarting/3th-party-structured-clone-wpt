@@ -366,8 +366,8 @@
 
       const info = document.createElement('p')
       info.innerHTML = `
-        <b>Tested:</b> <pre><span style="color: red;">${data.fn}</span></pre><br>
-        <b>actual output:</b> (take a look at console for more detail)<br><span style="color:red";>${data.output.result}${typeof data.output === 'bigint' ? 'n' : ''}</span><br>
+        <b>Tested:</b> <pre><span style="color: red;">${clone.fn}</span></pre><br>
+        <b>actual output:</b> (take a look at console for more detail)<br><span style="color:red";>${clone.output}${typeof clone.output === 'bigint' ? 'n' : ''}</span><br>
         <b>Size:</b> ${0}<br>
       `
       newCell.append(info, table)
