@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ppt - Protocol Platform Tester</title>
+  <link rel="stylesheet" href="https://unpkg.com/water.css/out/water.min.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "cbor": "https://cdn.jsdelivr.net/npm/cbor-x/dist/index.js/+esm"
+      }
+    }
+  </script>
+  <style>
+    table tbody td {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* use minium width for columns (all but first) */
+    thead td {
+      width: auto;
+    }
+
+    /* make table header sticky */
+    thead {
+      position: sticky;
+      top: 0;
+      background-color: var(--background);
+    }
+
+    thead td:not(:first-child) {
+      width: 80px;
+    }
+
+    body {
+      max-width: initial;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      * { color-scheme: dark; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p>I created this to test out how good avro, flexbuffers, cbor, msgpack, and others are at:</p>
+    <ul>
+      <li>Compressing data</li>
+      <li>How close they come to passing WPT structuredClone tests</li>
+      <li>How fast they are (and if they make any tradeoff)</li>
+      <li>And finding out if they have any bugs</li>
+      <li>And what they support and what not</li>
+      <li>How they work differently</li>
+    </ul>
+    <p>
+      I haven't written any packer myself so this is an unopinionated test case
+      that test all the packers I could find. I often find the performance results
+      to be somewhat misleading as they only promote themselves, and they only test
+      one specific version of their dependencies and only test in one engine and not the others.
+      I've tried to make this test as fair as possible by using the same data for all packers, and using the same test
+      harness for all packers.
+    </p>
+    <p>
+      The goal of this was to find a suitable import/export library for things you can store in IndexedDB.
+    </p>
+  </main>
+
+  <table>
+    <summary>This is what some libraries are able to structural clone</summary>
+    <thead>
+      <tr><th></th></tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+      <tr>
+        <td>
+          <!-- summary -->
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <h3>Conclusions:</h3>
+  <ul>
+    <li>
+      <a href="https://github.com/zloirock/core-js/blob/master/packages/core-js/modules/web.structured-clone.js">core-js</a>
+      serves as a good reference for what can be cloned and could be a good
+      starting point for a library that want to make a spinoff of it.<br>
+      it dose not however allow you to clone into a different realm, meaning you
+      can't transfer data between a client and a server.<br>
+      CoreJS also as an unfair performance advantage as it's clones are not serialized to/from
+      binary.
+    </li>
+    <li>
+      <a href="https://github.com/kriszyp/cbor-x">cbor-x</a> seems good but there are some caveats doe...
+      <br> Use Uint8array instead of buffer 👍
+    </li>
+    <li>
+      <a href="https://www.npmjs.com/package/msgpackr">msgpackr</a>
+      <br> Use Uint8array instead of buffer 👍
+    </li>
+    <li>
+      <a href="https://www.npmjs.com/package/flatbuffers">FlexBuffers</a> is an version of <a href="https://google.github.io/flatbuffers/">flatbuffers</a> that is designed
+      to work without a schema, so the data is self describing. (type is stored in the data)
+      but it was not able to clone much web classes. it very much designed to work cross different coding languages.
+      So it's mostly limited to basic number, strings, arrays, and objects.
+      <br> Use Uint8array instead of buffer 👍
+    </li>
+    <li>
+      <a href="https://www.npmjs.com/package/avsc">avro</a> It don't seem to be good for arbitrary data. Seems
+      to be designed for schema.
+      <br> It depends on NodeJS Buffer instead of using Uint8Array/DataView 👎
+    </li>
+    <li>
+      <a href="https://www.npmjs.com/package/bson">bson</a> is a binary format that MongoDB uses.
+      <br> It depends on NodeJS Buffer instead of using Uint8Array/DataView 👎
+    </li>
+    <li>
+      <a href="https://www.npmjs.com/package/ubjson">ubjson</a>
+      Seems to be abandoned and not updated for a long time.
+      <br> It depends on NodeJS Buffer instead of using Uint8Array/DataView 👎
+    </li>
+    <li>
+      <a href="https://www.npmjs.com/package/structured-clone">structured-clone</a> seems to have been abandoned and not updated
+      for a long time. So it don't support newer types.
+      <br> It depends on NodeJS Buffer instead of using Uint8Array/DataView 👎
+    </li>
+  </ul>
+
+  <p>To any implementer packing BigInts:<br>
+  You should not consider it as 64bit value. think of it more like a arbitrary length Uint8array with any length instead, you need to keep track if it's signed or not more manually.<br>
+  One solutions to this is reading 8 bits at a time, shift the number and then knowing the length of the buffer. (here is one <a href="https://stackoverflow.com/a/74246085/1008999">hex solution</a>)<br>
+  Another solution is to use a <a href="https://developers.google.com/protocol-buffers/docs/encoding#varints">varint</a> where 1 bit in each bytes is a continuation</p>
+
+  <main>
+    <form>
+      Test performance with real data:
+      <input type="url" list="suggestions" placeholder="https://" style="display: inline-block;">
+      <button id="import">Import</button>
+      <datalist id="suggestions">
+        <option value="https://api.github.com/repos/nodejs/node/issues/19393/comments" label="(large)"></option>
+        <option value="https://api.github.com" label="(small)"></option>
+      </datalist>
+      <textarea name="json" required></textarea>
+      <button id="exec">Execute</button>
+      <p>(it will run 1000 times each in a separate worker - one at the time)</p>
+    </form>
+  </main>
+  <script type="module">
+    const table = document.querySelector('table')
+    const _import = document.querySelector('#import')
+    const exec = document.querySelector('#exec')
+
+    _import.addEventListener('click', async (evt) => {
+      evt.preventDefault()
+
+      const url = document.querySelector('input').value
+      const res = await fetch(url)
+      const data = await res.json()
+      const text = JSON.stringify(data, null, 2)
+      document.querySelector('textarea').value = text
+    })
+    const benchmarks = document.createElement('div')
+    document.body.appendChild(benchmarks)
+    exec.onclick = async function runBenchmark (evt) {
+      evt.preventDefault()
+      benchmarks.innerHTML = ''
+      const data = JSON.parse(document.querySelector('textarea').value)
+
+      for (const worker of workers) {
+        const mc = new MessageChannel()
+        const result = await new Promise(resolve => {
+          mc.port1.onmessage = resolve
+          worker.postMessage({ type: 'bench', sampleData: data }, [mc.port2])
+        })
+        presentBenchResults(result.data)
+      }
+
+    }
+
+    function presentBenchResults (result) {
+      const table = document.createElement('table')
+      console.log(result)
+      // {
+      //   encode: {
+      //     avg: number
+      //     longest: number
+      //     shortest: number
+      //     total: number
+      //   },
+      //   decode: {
+      //     avg: number
+      //     longest: number
+      //     shortest: number
+      //     total: number
+      //   },
+      //   total: {
+      //     avg: number
+      //     longest: number
+      //     shortest: number
+      //     total: number
+      //   },
+      //   size: number
+      // }
+
+      const { encode, decode, total, size, name } = result
+      const { avg: encodeAvg, longest: encodeLongest, shortest: encodeShortest, total: encodeTotal } = encode
+      const { avg: decodeAvg, longest: decodeLongest, shortest: decodeShortest, total: decodeTotal } = decode
+      const { avg: totalAvg, longest: totalLongest, shortest: totalShortest, total: totalTime } = total
+
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th><b>${result.name}</b></th>
+            <th>Encode (ms)</th>
+            <th>Decode (ms)</th>
+            <th>Total time (ms)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>avg</td>
+            <td>${encodeAvg}</td>
+            <td>${decodeAvg}</td>
+            <td>${totalAvg}</td>
+          </tr>
+          <tr>
+            <td>longest</td>
+            <td>${encodeLongest}</td>
+            <td>${decodeLongest}</td>
+            <td>${totalLongest}</td>
+          </tr>
+          <tr>
+            <td>shortest</td>
+            <td>${encodeShortest}</td>
+            <td>${decodeShortest}</td>
+            <td>${totalShortest}</td>
+          </tr>
+          <tr>
+            <td>total</td>
+            <td>${encodeTotal}</td>
+            <td>${decodeTotal}</td>
+            <td>${totalTime}</td>
+          </tr>
+        </tbody>
+      `
+
+      const p = document.createElement('p')
+      p.innerHTML = !size ? '' : `
+        <b>${name} generated:</b> ${size.toLocaleString()} bytes
+      `
+
+      benchmarks.append(table, p)
+    }
+
+    function hashCode(str) {
+        let hash = 0;
+        for (let i = 0, len = str.length; i < len; i++) {
+            let chr = str.charCodeAt(i);
+            hash = (hash << 5) - hash + chr;
+            hash |= 0; // Convert to 32bit integer
+        }
+        return 'x' + hash;
+    }
+
+    const now = Date.now();
+    const workers = [];
+
+    ['native', 'corejs', 'cbor-x', 'msgpackr', 'flexbuffers', 'avro', 'bson', 'ubjson', 'structured-clone'].forEach((module, i, arr) => {
+      const worker = new Worker(`./${module}.js`, { type: 'module', name: module })
+      const columns = arr.length + 1;
+      const hTd = table.tHead.rows[0].insertCell()
+      hTd.innerText = module
+      // also insert tfoot cells
+      const tfoot = table.tFoot.rows[0]
+      tfoot.insertCell()
+
+      workers.push(worker)
+      worker.onmessage = ({ data }) => {
+        if (data.type === 'npm-version') {
+          hTd.innerHTML += `<br> (${data.version})`
+          return
+        }
+        const body = table.tBodies[0]
+        const section = data.heading
+        const id = hashCode(section)
+        let heading = body.querySelector(`#${id}`)
+
+        if (!heading) {
+          heading = document.createElement('tr')
+          heading.id = id
+          heading.innerHTML = `<th colspan="${columns}"><h2>${section}</h2></th>`
+          body.appendChild(heading)
+        }
+
+        const testId = hashCode(data.name)
+        let row = body.querySelector(`#${testId}`)
+        if (!row) {
+          row = document.createElement('tr')
+          heading.after(row)
+          row.id = testId
+          row.innerHTML = `<td>${data.name}</td>`
+          for (let i = 0; i < columns-1; i++) {
+            row.insertCell()
+          }
+        }
+        const nSuccess = data.results.reduce((acc, r) => acc + r.ok, 0)
+        row.cells[i + 1].innerHTML = (data.results.some(r => !r.ok) ? '❌' : '✅') + ` ${nSuccess}/${data.results.length}`
+        row.cells[i + 1].onclick = () => showRowDetails(row, data)
+
+        // Update summary in tfoot
+        const summary = table.tFoot.rows[0].cells[i + 1]
+        const n = parseInt(summary.innerText) || 0
+        summary.innerText = n + nSuccess
+      }
+    })
+
+    function showRowDetails(tr, data) {
+      document.querySelector('#details')?.remove()
+      const newRow = document.createElement('tr')
+      newRow.id = 'details'
+      const newCell = document.createElement('td')
+      newCell.colSpan = tr.cells.length
+      newRow.appendChild(newCell)
+      tr.after(newRow)
+      const clone = { ...data, ...data.output, output: data.output.result }
+      delete clone.result
+      console.log(clone)
+
+      const table = document.createElement('table')
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Assertions Test</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.results.map((r, i) => `
+            <tr>
+              <td style="color: red">${data.assertionFns[i]}</td>
+              <td>${r.ok ? "true" : r.message}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `
+
+      const info = document.createElement('p')
+      info.innerHTML = `
+        <b>Tested:</b> <pre><span style="color: red;">${data.fn}</span></pre><br>
+        <b>actual output:</b> (take a look at console for more detail)<br><span style="color:red";>${data.output}${typeof data.output === 'bigint' ? 'n' : ''}</span><br>
+        <b>Size:</b> ${0}<br>
+      `
+      newCell.append(info, table)
+    }
+  </script>
+</body>
+</html>
