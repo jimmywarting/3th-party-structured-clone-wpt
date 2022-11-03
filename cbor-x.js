@@ -4,6 +4,7 @@ import { runTestCases, getNpmVersion } from './test.js'
 const encoder = new cbor.Encoder({
   structuredClone: true,
   pack: true,
+  mapsAsObjects: true
 })
 
 function clone (input) {
