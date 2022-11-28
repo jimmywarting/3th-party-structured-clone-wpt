@@ -3,7 +3,9 @@ import { runTestCases, getNpmVersion } from './test.js'
 
 function clone (input) {
   const t1 = performance.now()
-  const buffer = encode(input)
+  const buffer = encode(input, {
+    useMaps: true
+  })
   const t2 = performance.now()
   const result = decode(buffer)
   const t3 = performance.now()
