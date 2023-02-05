@@ -285,7 +285,7 @@
     const now = Date.now();
     const workers = [];
 
-    ['native', 'corejs', 'cbor-x', 'cborg', 'msgpackr', 'flexbuffers', 'avro', 'bson', 'ubjson', 'structured-clone'].forEach((module, i, arr) => {
+    ['native', 'corejs', 'cbor-x', 'cborg', 'msgpackr', 'flexbuffers', 'avro', 'bson', 'ubjson', 'structured-clone', 'superjsonatural'].forEach((module, i, arr) => {
       const worker = new Worker(`./${module}.js`, { type: 'module', name: module })
       const columns = arr.length + 1;
       const hTd = table.tHead.rows[0].insertCell()

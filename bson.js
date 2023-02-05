@@ -1,4 +1,4 @@
-import BSON from 'https://cdn.jsdelivr.net/npm/bson/dist/bson.esm.js/+esm'
+import { BSON } from 'https://cdn.jsdelivr.net/npm/bson@5.0.0/lib/bson.min.mjs'
 import { getNpmVersion, runTestCases  } from './test.js'
 
 function clone (val) {
