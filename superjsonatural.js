@@ -1,7 +1,7 @@
 import SuperJSONatural from 'https://cdn.jsdelivr.net/npm/superjsonatural/+esm'
 import { runTestCases, getNpmVersion } from './test.js'
 
-const json = SuperJSONatural()
+const json = new SuperJSONatural()
 function clone(val) {
   const t1 = performance.now()
   const uint8 = json.pack(val)
